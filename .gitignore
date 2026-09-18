@@ -21,6 +21,8 @@ coverage/
 # Local environment files and secrets
 .env
 .env.*
+.dev.vars
+.dev.vars.*
 !.env.example
 !.env.*.example
 
