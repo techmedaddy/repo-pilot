@@ -1,6 +1,7 @@
 # RepoPilot
 
 RepoPilot is an AI-powered GitHub repository analyst. Give it a public GitHub repository and it produces an evidence-based engineering report covering architecture, reliability, security, observability, scalability, and deployment concerns.
+<img width="1915" height="985" alt="image" src="https://github.com/user-attachments/assets/cd6e0a69-6fb3-4b33-a4ae-cd7ebbfed60a" />
 
 The repository contains two runnable implementations:
 
@@ -16,6 +17,8 @@ The repository contains two runnable implementations:
 - Ask follow-up questions about a generated report.
 - Generate implementation checklists and compare repository reports.
 - Start with the bundled `techmedaddy/TorrentEdge` benchmark repository.
+<img width="1915" height="985" alt="image" src="https://github.com/user-attachments/assets/6ff0908f-8438-4431-8a4e-01abc1d9ff29" />
+
 
 ## Requirements
 
@@ -24,6 +27,8 @@ The repository contains two runnable implementations:
 - A GitHub personal access token for higher GitHub API limits
 - For the Cloudflare implementation: a Cloudflare account with Workers AI enabled
 - For the standalone implementation: a Gemini API key if live Gemini analysis is required
+<img width="1915" height="985" alt="image" src="https://github.com/user-attachments/assets/e8865e98-76d0-4d53-817a-66d234df0465" />
+
 
 ## Project Structure
 
@@ -53,6 +58,8 @@ This is the easiest way to run RepoPilot locally.
 cd repopilot-UI
 npm install
 ```
+<img width="1915" height="985" alt="image" src="https://github.com/user-attachments/assets/e957f8ee-3ad4-49a6-b9b1-23ae7f4eef23" />
+
 
 ### 2. Configure environment variables
 
@@ -87,6 +94,8 @@ This starts the API on port `3000` without the Vite middleware. It is useful for
 npm run build
 npm start
 ```
+<img width="1915" height="985" alt="image" src="https://github.com/user-attachments/assets/93f2703a-3b01-42e8-830d-7b82f10a0bda" />
+
 
 The production bundle is written to `repopilot-UI/dist/`.
 
