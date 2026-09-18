@@ -24,6 +24,9 @@ coverage/
 !.env.example
 !.env.*.example
 
+# Local assignment notes
+RepoPilot_Cloudflare_Assignment.md
+
 # Logs and local databases
 *.log
 *.sqlite
