@@ -1,83 +1,186 @@
 # RepoPilot
 
-RepoPilot is an AI repository analyst built on **Cloudflare Agent** and **Workflow** primitives. It analyzes public GitHub repositories to generate evidence-based engineering reports covering:
+RepoPilot is an AI-powered GitHub repository analyst. Give it a public GitHub repository and it produces an evidence-based engineering report covering architecture, reliability, security, observability, scalability, and deployment concerns.
 
-- Architecture & Data Flow
-- Reliability & Idempotency
-- Security & Secret Handling
-- OpenTelemetry Observability
-- Scalability Bottlenecks
+The repository contains two runnable implementations:
 
-## Tech Stack
+- `backend/` - the Cloudflare Workers implementation using Agents, Durable Objects, Workflows, and Workers AI.
+- `repopilot-UI/` - a standalone Express and React/Vite implementation for local demos and development. It keeps state in memory and can use Gemini for analysis.
 
-- **Frontend**: React, Vite, Tailwind CSS, Lucide React
-- **Backend**: Cloudflare Workers, Cloudflare Durable Objects, Cloudflare Workflows, Hono/Agent routing
-- **AI Integration**: Workers AI (`@cf/moonshotai/kimi-k2.7-code` and `@cf/meta/llama-3.1-8b-instruct`), Vercel AI SDK
-- **Language**: TypeScript
+## Features
 
-## System Architecture
+- Analyze a public GitHub repository from its URL or `owner/repository` name.
+- Inspect repository metadata, the file tree, source files, manifests, and deployment configuration.
+- Run a six-step analysis workflow with visible progress.
+- Generate structured reports with schema-validated sections for architecture, reliability, security, observability, scalability, and recommendations.
+- Ask follow-up questions about a generated report.
+- Generate implementation checklists and compare repository reports.
+- Start with the bundled `techmedaddy/TorrentEdge` benchmark repository.
 
-1. **RepoAgent (Durable Object)**: Manages chat sessions, context persistence, and intent parsing. It leverages `@cloudflare/ai-chat` to maintain state.
-2. **RepoAnalysisWorkflow (Cloudflare Workflows)**: A highly resilient background pipeline that executes a 4-step sequence:
-   - `fetch-metadata`: Interrogates the GitHub API for repo statistics.
-   - `fetch-tree`: Indexes the repository tree recursively.
-   - `fetch-files`: Downloads specific manifests (e.g., `package.json`, `docker-compose.yml`).
-   - `llm-analysis`: Runs the evidence through an LLM to generate a strictly typed (`Zod` validated) JSON report.
-3. **REST API**: Custom Worker endpoints (`/api/chat`, `/api/analyze`, `/api/workflows/:id`) bridge the React frontend with the Cloudflare backend primitives, streaming progress efficiently.
+## Requirements
 
-## Getting Started
+- Node.js 18 or newer
+- npm
+- A GitHub personal access token for higher GitHub API limits
+- For the Cloudflare implementation: a Cloudflare account with Workers AI enabled
+- For the standalone implementation: a Gemini API key if live Gemini analysis is required
 
-### Prerequisites
+## Project Structure
 
-- Node.js (v18+)
-- Cloudflare Wrangler CLI (`npm install -g wrangler`)
-- A GitHub Personal Access Token (for increased rate limits)
+```text
+.
+├── backend/
+│   ├── src/server.ts                 # Cloudflare Worker entry point
+│   ├── src/workflows/                # Durable repository analysis workflow
+│   ├── src/components/               # Cloudflare-hosted React UI
+│   ├── wrangler.jsonc                # Workers, AI, Durable Object, and Workflow bindings
+│   └── package.json
+├── repopilot-UI/
+│   ├── server.ts                     # Standalone Express API and Vite host
+│   ├── server/                       # GitHub and Gemini integrations
+│   ├── src/                          # React client
+│   └── package.json
+└── README.md
+```
 
-### Installation
+## Standalone Local Development
 
-1. Clone the repository and install dependencies:
-   ```bash
-   cd backend
-   npm install
-   ```
+This is the easiest way to run RepoPilot locally.
 
-2. Add your GitHub token to the `.dev.vars` file for local development:
-   ```bash
-   echo "GITHUB_TOKEN=your_token_here" > .dev.vars
-   ```
+### 1. Install dependencies
 
-3. Start the local development server:
-   ```bash
-   npx wrangler dev
-   ```
+```bash
+cd repopilot-UI
+npm install
+```
 
-## Deployment
+### 2. Configure environment variables
 
-Deploying the application to Cloudflare's edge network:
+Create `repopilot-UI/.env` and add your Gemini key:
 
-1. Log in to Cloudflare:
-   ```bash
-   npx wrangler login
-   ```
+```env
+GEMINI_API_KEY=your_gemini_api_key
+APP_URL=http://localhost:3000
+```
 
-2. Add your GitHub token to the production secrets:
-   ```bash
-   npx wrangler secret put GITHUB_TOKEN
-   ```
+The committed `.env.example` is a template only. Never commit `.env` or API keys.
 
-3. Deploy the application:
-   ```bash
-   npm run deploy
-   ```
-   *(This will run `vite build` followed by `wrangler deploy`)*
+### 3. Start the application
 
-## Prompt History
+```bash
+npm run dev
+```
 
-During development, the following major AI prompt paradigms were used:
-- **Agent Intent Parsing Prompt:** "You are RepoPilot, a highly capable software architecture analyst. If the user asks to analyze a repository, ALWAYS use the `analyzeRepository` tool to start the deep background analysis workflow."
-- **Workflow Analysis Prompt:** "You are an expert software architect. Analyze the provided repository structure and evidence. Extract the core architecture, scalability bottlenecks, and security vulnerabilities. Respond ONLY in valid JSON matching the exact schema."
+Open [http://localhost:3000](http://localhost:3000).
 
-## Edge Cases Handled
+If the local Vite middleware crashes on your machine, run the API-only fallback:
 
-- **Missing `data.report` payload**: Cloudflare Workflows are executed asynchronously. To handle this, the React frontend (`App.tsx`) implements an intelligent polling mechanism. It gracefully queries the `/api/workflows/:id` endpoint every 2 seconds to check the state (`running`, `completed`, or `failed`), preventing UI crashes and rendering intermediate loading states.
-- **Strict TypeScript Validation**: Fixed generic `unknown` HTTP response types from the Fetch API by enforcing explicit interface casts and schema validations (`StructuredReportSchema`), passing full `tsc --noEmit` checks.
+```bash
+SKIP_VITE=true npm run dev
+```
+
+This starts the API on port `3000` without the Vite middleware. It is useful for API smoke tests, but it does not serve the React development UI.
+
+### 4. Build and run the standalone application
+
+```bash
+npm run build
+npm start
+```
+
+The production bundle is written to `repopilot-UI/dist/`.
+
+## Cloudflare Development
+
+The Cloudflare implementation lives in `backend/` and uses the bindings declared in `backend/wrangler.jsonc`.
+
+### 1. Install dependencies
+
+```bash
+cd backend
+npm install
+```
+
+### 2. Configure local secrets
+
+Create `backend/.dev.vars`:
+
+```env
+GITHUB_TOKEN=your_github_personal_access_token
+```
+
+Do not commit `.dev.vars` or any file containing a real token.
+
+### 3. Authenticate with Cloudflare
+
+Use either interactive Wrangler login:
+
+```bash
+npx wrangler login
+```
+
+or configure a `CLOUDFLARE_API_TOKEN` in your shell for the local Workers AI binding.
+
+### 4. Start the Worker
+
+```bash
+npm run dev
+```
+
+Wrangler will start the Worker locally and expose the configured Worker routes. Remote Workers AI bindings require Cloudflare authentication.
+
+## Useful Commands
+
+Run these from the relevant application directory.
+
+### Backend
+
+```bash
+npm run check       # Format check, Oxlint, and TypeScript
+npm run format      # Format source files
+npm run lint        # Run Oxlint
+npm run types       # Regenerate Wrangler environment types
+npm run deploy      # Build and deploy to Cloudflare
+```
+
+### Standalone UI
+
+```bash
+npm run lint        # TypeScript check
+npm run build       # Build the React client and API server
+npm run clean       # Remove generated output
+```
+
+## API Smoke Tests
+
+With the standalone server running on port `3000`:
+
+```bash
+curl http://localhost:3000/api/health
+curl http://localhost:3000/api/reports/techmedaddy/TorrentEdge
+```
+
+The main API routes include:
+
+| Method | Route | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/health` | Runtime and dependency health information |
+| `GET` | `/api/sample-repos` | Bundled example repositories |
+| `GET` | `/api/history` | Reports held in the current process |
+| `GET` | `/api/reports/:owner/:repo` | Retrieve a repository report |
+| `POST` | `/api/analyze` | Start a repository analysis |
+| `POST` | `/api/chat` | Ask a question about a report |
+| `POST` | `/api/checklist/approve` | Approve a generated checklist |
+| `POST` | `/api/checklist/toggle` | Toggle a checklist item |
+| `POST` | `/api/compare` | Compare two reports |
+
+## Notes
+
+- The standalone server stores reports and messages in memory, so restarting it clears local state.
+- GitHub repositories must be public unless the server is configured with a token that has access.
+- The Cloudflare version persists agent and workflow state through Cloudflare primitives; the standalone version simulates that state locally.
+- Generated files, dependencies, macOS metadata, local secrets, and the private assignment notes are excluded by the root `.gitignore`.
+
+## License
+
+This project is released under the MIT license. See `backend/LICENSE` for the license text.
