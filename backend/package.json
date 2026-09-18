@@ -11,8 +11,8 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
-    "start": "vite dev",
+    "dev": "node --env-file=.dev.vars ./node_modules/vite/bin/vite.js dev",
+    "start": "node --env-file=.dev.vars ./node_modules/vite/bin/vite.js dev",
     "deploy": "vite build && wrangler deploy",
     "types": "wrangler types env.d.ts",
     "format": "oxfmt --write .",

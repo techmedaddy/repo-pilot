@@ -21,6 +21,42 @@ export interface Env {
   RepoAgent: DurableObjectNamespace<RepoAgent>;
 }
 
+function workflowSteps(status: string) {
+  const done = status === "complete" || status === "completed";
+  const failed =
+    status === "errored" || status === "failed" || status === "error";
+  return [
+    "Fetch Metadata",
+    "Inspect Tree",
+    "Extract Source",
+    "LLM Reasoning",
+    "Validate Report",
+    "Persist Report"
+  ].map((label, index) => ({
+    id: `step-${index + 1}`,
+    label,
+    description:
+      index === 0
+        ? "Retrieve repository metadata"
+        : index === 1
+          ? "Inspect repository file tree"
+          : index === 2
+            ? "Select and fetch relevant evidence files"
+            : index === 3
+              ? "Analyze evidence with Workers AI"
+              : index === 4
+                ? "Normalize structured report output"
+                : "Return report to the application",
+    status: done
+      ? "completed"
+      : failed
+        ? "failed"
+        : index === 0
+          ? "running"
+          : "pending"
+  }));
+}
+
 export class RepoAgent extends AIChatAgent<Env> {
   maxPersistedMessages = 100;
   chatRecovery = true;
@@ -321,7 +357,7 @@ export default {
             workflow: {
               id: instance.id,
               status: status.status,
-              steps: []
+              steps: workflowSteps(status.status)
             },
             report
           }),
