@@ -1,0 +1,6 @@
+{
+  "name": "RepoPilot",
+  "description": "AI-powered GitHub repository analyst built on Cloudflare Agents and durable workflows.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "repo-pilot",
+  "main": "server.ts",
+  "compatibility_date": "2026-03-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "REPO_AGENT",
+        "class_name": "RepoAgent"
+      }
+    ]
+  },
+  "workflows": [
+    {
+      "name": "repo-analysis-workflow",
+      "binding": "REPO_ANALYSIS_WORKFLOW",
+      "class_name": "RepoAnalysisWorkflow"
+    }
+  ],
+  "ai": {
+    "binding": "AI"
+  },
+  "vars": {
+    "ENVIRONMENT": "production"
+  }
+}
